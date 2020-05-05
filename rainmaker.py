@@ -1,6 +1,6 @@
 import logging
 import datetime
-from gpiozero import button, led
+from gpiozero import Button, LED
 
 #logging
 logging.basicConfig(rainmaker.log, level=debug, format='%(asctime)s - %(levelname)s: %(message)s')
