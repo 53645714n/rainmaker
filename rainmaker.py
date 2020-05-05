@@ -3,14 +3,14 @@ import datetime
 from gpiozero import Button, LED
 
 #logging
-logging.basicConfig('rainmaker.log', level=DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
+logging.basicConfig(filename='rainmaker.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
 
 #GPIO
-A = button(22)
-B = button(23)
-C = button(24)
-D = button(25)
-RedButton = button (26)
-GreenButton = button (27)
-RedLed = led(16)
-GreenLed = (17)
+A = Button(22)
+B = Button(23)
+C = Button(24)
+D = Button(25)
+RedButton = Button (26)
+GreenButton = Button (27)
+RedLed = LED(16)
+GreenLed = LED(17)
