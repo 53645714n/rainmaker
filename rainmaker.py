@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 #from gpiozero import Button, LED
 import RPi.GPIO as GPIO
 
@@ -34,13 +34,33 @@ def pump_on():
 	logging.info('Pump turned on at %s', TimeOn)
 	while True:
 		GPIO.output(PumpRelais,GPIO.HIGH)
-		print(TimeOn)
+#		print(TimeOn)
 		if GPIO.input(B):
 			logging.info('Pump turned off')
 			GPIO.output(PumpRelais,GPIO.LOW)
+			input()
+			break
+		elif datetime.now() > TimeOff:
+			logging.info('Pump turned off by timer')
+			GPIO.output(PumpRelais,GPIO.LOW)
+			input()
 			break
 
-pump_on()
+def input():
+	global TimeOff
+	while True:
+		if GPIO.input(A):
+			pump_on()
+		elif GPIO.input(C):
+			TimeOff = datetime.now() + timedelta(seconds = 10)
+			logging.info('TimeOff set at: %s', TimeOff)
+			pump_on()
+		elif GPIO.input(D):
+			TimeOff = datetime.now() + timedelta(minutes = 60)
+			logging.info('TimeOff set at: %s', TimeOff)
+			pump_on()
+
+input()
 
 #		else:
 #			break
