@@ -16,3 +16,12 @@ Because it is hard to find the correct spot for the sprinkler at once, the farme
 Waiting for the moment to switch off the pump isn't exactly time well spent, with this program the farmer is able to set a timer to two pre-defined times remotely and go home.
 
 ## Wish list
+
+# Manual
+### LED's
+| Green | Red | *Function* |
+| --- | --- | --- |
+| On | Off | Pump is off |
+| Off | On | Error occured, view logging |
+| Blinking | On | Pump is on indefinately |
+| Blinking | Blinking | Pump is on on timer |
