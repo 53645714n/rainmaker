@@ -30,18 +30,46 @@ GPIO.setup(PumpRelais,GPIO.OUT)
 ''' the magic '''
 #Turns pump on
 def pump_on():
+	GPIO.output(GreenLed,GPIO.HIGH)
 	TimeOn = datetime.now()
-	logging.info('Pump turned on at %s', TimeOn)
+#	logging.info('Pump turned on at %s', TimeOn)
 	while True:
 		GPIO.output(PumpRelais,GPIO.HIGH)
 #		print(TimeOn)
 		if GPIO.input(B):
-			logging.info('Pump turned off')
+			logging.debug('Input B')
+			logging.info('Pump turned off remotely, on-time: %s', (datetime.now() - TimeOn))
+			GPIO.output(PumpRelais,GPIO.LOW)
+			input()
+			break
+		elif GPIO.input(RedButton):
+			logging.debug('Input RedButton')
+			logging.info('Pump turned off locally, on-time: %s', (datetime.now() - TimeOn))
+			GPIO.output(PumpRelais,GPIO.LOW)
+			input()
+			break
+
+def pump_on_timer():
+	GPIO.output(GreenLed,GPIO.HIGH)
+	TimeOn = datetime.now()
+#	logging.info('Pump turned on at %s', TimeOn)
+	while True:
+		GPIO.output(PumpRelais,GPIO.HIGH)
+#		print(TimeOn)
+		if GPIO.input(B):
+			logging.debug('Input B')
+			logging.info('Timer interrupted remotely, on-time: %s', (datetime.now() - TimeOn))
+			GPIO.output(PumpRelais,GPIO.LOW)
+			input()
+			break
+		elif GPIO.input(RedButton):
+			logging.debug('Input RedButton')
+			logging.info('Timer interrupted locally, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
 			input()
 			break
 		elif datetime.now() > TimeOff:
-			logging.info('Pump turned off by timer')
+			logging.info('Pump turned off by timer, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
 			input()
 			break
@@ -49,34 +77,34 @@ def pump_on():
 def input():
 	global TimeOff
 	while True:
+		GPIO.output(GreenLed,GPIO.LOW)
 		if GPIO.input(A):
+			logging.debug('Input A')
+			logging.info('Pump turned on remotely')
 			pump_on()
 		elif GPIO.input(C):
+			logging.debug('Input C')
 			TimeOff = datetime.now() + timedelta(seconds = 10)
-			logging.info('TimeOff set at: %s', TimeOff)
-			pump_on()
+			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
+			pump_on_timer()
 		elif GPIO.input(D):
+			logging.debug('Input D')
 			TimeOff = datetime.now() + timedelta(minutes = 60)
-			logging.info('TimeOff set at: %s', TimeOff)
+			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
+			pump_on_timer()
+		elif GPIO.input(GreenButton):
+			logging.debug('Input GreenButton')
+			logging.info('Pump turned on locally')
 			pump_on()
 
-input()
+#input()
 
-#		else:
-#			break
-#def input():
-#	if GPIO.input(A)
-#	pump_on()
-
-#def input():
-#
-#if __name__ == "__main__":
-#	try:
-#		pump_on()
-#		main_loop()
-#	except RuntimeError as error:
-#		print(error.args[0])
-#	except KeyboardInterrupt:
-#		print("\nExiting application\n")
-#		# exit the applications
-#		GPIO.cleanup()
+if __name__ == "__main__":
+	try:
+		input()
+	except RuntimeError as error:
+		print(error.args[0])
+	except KeyboardInterrupt:
+		print("\nExiting application\n")
+		# exit the applications
+		GPIO.cleanup()
