@@ -1,83 +1,117 @@
 import logging
 from datetime import datetime, timedelta
-#from gpiozero import Button, LED
 import RPi.GPIO as GPIO
+import threading
+import time
 
-#logging
-logging.basicConfig(filename='rainmaker.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
+#logging, logs all events to the file rainmaker.log
+logging.basicConfig(filename='rainmaker.log', level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
 
-#GPIO
+#GPIO, use this section to change pin numbers if your wiring differs from mine
 GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 A = 22
-GPIO.setup(A, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 B = 23
-GPIO.setup(B, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 C = 24
-GPIO.setup(C, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 D = 25
-GPIO.setup(D, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 RedButton = 26
-GPIO.setup(RedButton, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GreenButton = 27
-GPIO.setup(GreenButton, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 RedLed = 16
 GreenLed = 17
 PumpRelais = 0
+GPIO.setup(A, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(B, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(C, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(D, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(RedButton, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(GreenButton, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(RedLed,GPIO.OUT)
 GPIO.setup(GreenLed,GPIO.OUT)
 GPIO.setup(PumpRelais,GPIO.OUT)
 
-''' the magic '''
-#Turns pump on
-def pump_on():
-	GPIO.output(GreenLed,GPIO.HIGH)
+def pump_on_led(): # The LED's for pump on indefinately, started as a thread in pump_on
+	GPIO.output(RedLed,GPIO.HIGH)
+	while True:
+		GPIO.output(GreenLed,GPIO.LOW)
+		time.sleep(0.5)
+		GPIO.output(GreenLed,GPIO.HIGH)
+		time.sleep(0.5)
+		if stop_threads:
+			break
+
+def pump_on_timer_led(): # The LED's for pump on timer, started as a thread in pump_on_timer
+	while True:
+		GPIO.output(GreenLed,GPIO.LOW)
+		GPIO.output(RedLed, GPIO.HIGH)
+		time.sleep(0.5)
+		GPIO.output(GreenLed,GPIO.HIGH)
+		GPIO.output(RedLed,GPIO.LOW)
+		time.sleep(0.5)
+		if stop_threads:
+			break
+
+def pump_on(): # Turns the pump on
+	global stop_threads
+	stop_threads = False
+	t1 = threading.Thread(target = pump_on_led)
+	t1.start()
 	TimeOn = datetime.now()
-#	logging.info('Pump turned on at %s', TimeOn)
 	while True:
 		GPIO.output(PumpRelais,GPIO.HIGH)
-#		print(TimeOn)
 		if GPIO.input(B):
 			logging.debug('Input B')
 			logging.info('Pump turned off remotely, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
+			stop_threads = True
+			t1.join()
 			input()
 			break
 		elif GPIO.input(RedButton):
 			logging.debug('Input RedButton')
 			logging.info('Pump turned off locally, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
+			stop_threads = True
+			t1.join()
 			input()
 			break
 
-def pump_on_timer():
-	GPIO.output(GreenLed,GPIO.HIGH)
+def pump_on_timer(): # Turns on the pump and turns it off after a set time
+	global stop_threads
+	stop_threads = False
+	t1 = threading.Thread(target = pump_on_timer_led)
+	t1.start()
 	TimeOn = datetime.now()
-#	logging.info('Pump turned on at %s', TimeOn)
 	while True:
 		GPIO.output(PumpRelais,GPIO.HIGH)
-#		print(TimeOn)
 		if GPIO.input(B):
 			logging.debug('Input B')
 			logging.info('Timer interrupted remotely, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
+			stop_threads = True
+			t1.join()
 			input()
 			break
 		elif GPIO.input(RedButton):
 			logging.debug('Input RedButton')
 			logging.info('Timer interrupted locally, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
+			stop_threads = True
+			t1.join()
 			input()
 			break
 		elif datetime.now() > TimeOff:
 			logging.info('Pump turned off by timer, on-time: %s', (datetime.now() - TimeOn))
 			GPIO.output(PumpRelais,GPIO.LOW)
+			stop_threads = True
+			t1.join()
 			input()
 			break
 
 def input():
+	GPIO.output(GreenLed,GPIO.HIGH)
+	GPIO.output(RedLed,GPIO.LOW)
 	global TimeOff
 	while True:
-		GPIO.output(GreenLed,GPIO.LOW)
 		if GPIO.input(A):
 			logging.debug('Input A')
 			logging.info('Pump turned on remotely')
@@ -97,13 +131,12 @@ def input():
 			logging.info('Pump turned on locally')
 			pump_on()
 
-#input()
-
 if __name__ == "__main__":
 	try:
 		input()
 	except RuntimeError as error:
 		print(error.args[0])
+		GPIO.input(RedLed,HIGH)
 	except KeyboardInterrupt:
 		print("\nExiting application\n")
 		# exit the applications
