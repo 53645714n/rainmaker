@@ -133,11 +133,14 @@ def input():
 
 if __name__ == "__main__":
 	try:
+		logging.info('rainmaker started')
 		input()
 	except RuntimeError as error:
 		print(error.args[0])
+		logging.error(error.args[0])
 		GPIO.input(RedLed,HIGH)
 	except KeyboardInterrupt:
 		print("\nExiting application\n")
 		# exit the applications
+		logging.info('rainmaker stopped')
 		GPIO.cleanup()
