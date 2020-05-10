@@ -17,7 +17,50 @@ Waiting for the moment to switch off the pump isn't exactly time well spent, wit
 
 ## Wish list
 
+# Installation
+I'm assuming you have git and python/pip installed, if not do this first.
+
+After:
+```
+git clone https://github.com/53645714n/rainmaker.git
+```
+
+## Dependencies
+On raspbian, everything is there. On other systems:
+```
+pip install -r rainmaker/requirements.txt
+```
+
+## Setup
+If you wired everything exactly like I did, run the program.
+```
+python3 rainmaker/rainmaker.py & #this will start the script
+tail -f rainmaker.log #this will show you what it's doing.
+```
+
+If you wired something differently, open the file and edit the GPIO section.
+```
+nano rainmaker/rainmaker.py
+```
+
+## Auto start
+```
+sudo nano /home/pi/.bashrc
+```
+add to the end of the file
+```
+echo Running at boot 
+python3 /home/pi/rainmaker/rainmaker.py &
+```
+
 # Manual
+The program will start at boot and log any events to rainmaker.log in the home folder.
+
+## Buttons
+The green and A buttons turn on the pump indefinately
+The red and B buttons turn off the pump and interrupt any timer set
+The C and D buttons set a timer for a set time (standard 30 and 60 minutes)
+
 ### LED's
 | Green | Red | *Function* |
 | --- | --- | --- |
