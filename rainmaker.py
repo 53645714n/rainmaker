@@ -5,7 +5,7 @@ import threading
 import time
 
 #logging, logs all events to the file rainmaker.log
-logging.basicConfig(filename='rainmaker.log', level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
+logging.basicConfig(filename='/home/pi/rainmaker.log', level=logging.INFO, format='%(asctime)s - %(levelname)s: %(message)s')
 
 #GPIO, use this section to change pin numbers if your wiring differs from mine
 GPIO.setmode(GPIO.BCM)
