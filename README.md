@@ -17,6 +17,34 @@ Waiting for the moment to switch off the pump isn't exactly time well spent, wit
 
 ## Wish list
 
+# Installation
+I'm assuming you have git and python/pip installed, if not do this first.
+
+## Dependencies
+On raspbian, everything is there. On other systems:
+'''
+pip install -r requirements.txt
+'''
+
+## The script
+git clone https://github.com/53645714n/rainmaker.git
+
+Then 
+´´´
+cd rainmaker
+´´´
+
+If you wired everything exactly like I did, run the program.
+'''
+python3 rainmaker.py & #this will start the script
+tail -f rainmaker.log #this will show you what it's doing.
+'''
+
+If you wired something differently, open the file and edit the GPIO section.
+'''
+nano rainmaker.py
+'''
+
 # Manual
 ### LED's
 | Green | Red | *Function* |
