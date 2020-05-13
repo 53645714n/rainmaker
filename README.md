@@ -19,10 +19,10 @@ Waiting for the moment to switch off the pump isn't exactly time well spent, wit
 ![schematics, also available in gpio configuration](https://raw.githubusercontent.com/53645714n/rainmaker/master/Rainmaker.png "Schematics")
 
 ## Software
-I'm assuming you have git and python/pip installed, if not do this first.
-
-After:
+Install python and git if you haven't already and then clone the repository.
 ```
+sudo apt install python3-pip
+sudo apt-get install git
 git clone https://github.com/53645714n/rainmaker.git
 ```
 
