@@ -1,5 +1,5 @@
 # rainmaker
-Remote control and timer for springkler system.
+Remote control and timer for sprinkler system.
 The pumpcontroller for the sprinkler system is a DAB ESC 4 T, which has a s/w connection for turning on and off the pump which I will be switching with a relais connected to a Raspberry Pi.
 
 ## The concept
