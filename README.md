@@ -16,7 +16,7 @@ Waiting for the moment to switch off the pump isn't exactly time well spent, wit
 - Green and red buttons with switchable LED
 
 ### Schematics
-![schematics, also available in gpio configuration](https://github.com/53645714n/rainmaker/Rainmaker.png "Schematics")
+![schematics, also available in gpio configuration](https://raw.githubusercontent.com/53645714n/rainmaker/master/Rainmaker.png "Schematics")
 
 ## Software
 I'm assuming you have git and python/pip installed, if not do this first.
