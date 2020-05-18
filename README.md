@@ -30,14 +30,15 @@ pip install -r rainmaker/requirements.txt
 ### Setup
 If you wired everything exactly like I did, skip this and go to run the program.
 ```
+nano rainmaker/rainmaker.py
+```
+
+### Run the program
+```
 python3 rainmaker/rainmaker.py & #this will start the script
 tail -f rainmaker.log #this will show you what it's doing.
 ```
-### Run the program
-If you wired something differently, open the file and edit the GPIO section.
-```
-nano rainmaker/rainmaker.py
-```
+Type 'kill -9 [PROCESS]'  to kill the script where [PROCESS] is the number returned after the python3 command.
 
 ### Auto start
 ```
