@@ -117,16 +117,14 @@ def pump_on_led(): # The LED's for pump on indefinately, started as a thread in 
 		if stop_threads:
 			break
 
-def timer_menu_led(): # The LED's for pump on indefinately, started as a thread in pump_on
+def timer_menu_led(stop_event): # The LED's for pump on indefinately, started as a thread in pump_on
 	GPIO.output(GreenLed,GPIO.LOW)
-	while True:
+	while not stop_event.is_set():
 		GPIO.output(RedLed,GPIO.HIGH)
 		time.sleep(0.2)
 		GPIO.output(RedLed,GPIO.LOW)
 		time.sleep(0.8)
-		if stop_threads:
-			break
-
+	logging.debug('Stop timer_menu_led')
 
 def pump_on_lcd(): # The LCD for pump on indefinately, started as a thread in pump_on
 	lcd_string("Pomp staat aan.",LCD_LINE_2)
@@ -190,7 +188,7 @@ def pump_on_timer(): # Turns on the pump and turns it off after a set time
 	global stop_threads
 	stop_threads = False
 	TimeOn = datetime.now()
-	global TimeOff
+#	global TimeOff
 #	TimeOff = datetime.now() + timedelta(minutes=1) #For testing purposes
 	t1 = threading.Thread(target = pump_on_timer_led)
 	t1.start()
@@ -226,14 +224,15 @@ def pump_on_timer(): # Turns on the pump and turns it off after a set time
 			break
 
 def timer_menu():
-	global stop_threads
-	stop_threads = False
-	t1 = threading.Thread(target = timer_menu_led)
+	logging.debug('Timer menu started')
+	global stop
+	stop = threading.Event()
+	global t1
+	t1 = threading.Thread(target = timer_menu_led, args=(stop,))
 	t1.start()
 	now = datetime.now()
 	global StartTime
 	StartTime = now + timedelta(minutes=-now.minute,seconds=-now.second) + timedelta(minutes=(int(now.minute/15)*15)+15)
-	#StartTime = now + timedelta(minutes=-now.minute,seconds=-now.second)
 	clkLastState = GPIO.input(clk)
 	lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
 	lcd_string("Start time "+StartTime.strftime("%H:%M"),LCD_LINE_2)
@@ -259,13 +258,13 @@ def timer_menu():
 		elif GPIO.input(RedButton):
 			logging.debug('Input RedButton')
 			logging.info('Timer menu closed without setting a timer')
-			stop_threads = True
+			stop.set()
 			t1.join()
 			input()
 			break
 
 def timer_menu_end():
-#	StartTime = datetime.now()
+	logging.debug('Timer menu end started')
 	global EndTime
 	EndTime = StartTime + timedelta(minutes=30)
 	clkLastState = GPIO.input(clk)
@@ -287,20 +286,20 @@ def timer_menu_end():
 		elif GPIO.input(SW) == False:
 			time.sleep(0.05)
 			logging.debug('Input SW')
-#			timer_menu_end()
 			logging.info('End time set at '+ EndTime.strftime("%H:%M"))
-			stop_threads = True
+			stop.set()
 			t1.join()
-			break
+#			break # Removed break to see if RAINMAKER wouldn't appear ater pushing button while nothing else was configured
 		elif GPIO.input(RedButton):
 			logging.debug('Input RedButton')
 			logging.info('Timer menu closed without setting a timer')
-			stop_threads = True
+			stop.set()
 			t1.join()
 			input()
 			break
 
 def input():
+	logging.debug('Input started')
 	GPIO.output(GreenLed,GPIO.HIGH)
 	GPIO.output(RedLed,GPIO.LOW)
 	global TimeOff
