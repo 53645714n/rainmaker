@@ -22,7 +22,7 @@ RedLed = 16
 GreenLed = 17
 PumpRelais = 5
 clk = 18
-dt = 15
+dt = 10
 SW = 22
 GPIO.setup(SW, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(clk, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -148,13 +148,22 @@ def pump_on_timer_led(): # The LED's for pump on timer, started as a thread in p
 def pump_on_timer_lcd(): # The LCD for pump on timer, started as a thread in pump_on_timer
 	while True:
 		lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
-		lcd_string("Pomp uit:  "+TimeOff.strftime('%H:%M'),LCD_LINE_2)
-		time.sleep(0.5)
-		if stop_threads:
-			break
+		if datetime.now() < TimeOn:
+			lcd_string("Pomp aan:  "+TimeOn.strftime('%H:%M'),LCD_LINE_2)
+			time.sleep(1)
+			lcd_string("Pomp uit:  "+TimeOff.strftime('%H:%M'),LCD_LINE_2)
+			time.sleep(1)
+			if stop_threads:
+				break
+		elif datetime.now() >= TimeOn:
+			lcd_string("Pomp uit:  "+TimeOff.strftime('%H:%M'),LCD_LINE_2)
+			time.sleep(0.5)
+			if stop_threads:
+				break
 
 
 def pump_on(): # Turns the pump on
+	logging.debug('pump_on started')
 	global stop_threads
 	stop_threads = False
 	t1 = threading.Thread(target = pump_on_led)
@@ -185,9 +194,10 @@ def pump_on(): # Turns the pump on
 			break
 
 def pump_on_timer(): # Turns on the pump and turns it off after a set time
+	logging.debug('pump_on_timer started, StartTime = %s, EndTime = %s', TimeOn, TimeOff)
 	global stop_threads
 	stop_threads = False
-	TimeOn = datetime.now()
+#	TimeOn = datetime.now()
 #	global TimeOff
 #	TimeOff = datetime.now() + timedelta(minutes=1) #For testing purposes
 	t1 = threading.Thread(target = pump_on_timer_led)
@@ -195,33 +205,51 @@ def pump_on_timer(): # Turns on the pump and turns it off after a set time
 	t2 = threading.Thread(target = pump_on_timer_lcd)
 	t2.start()
 	while True:
-		GPIO.output(PumpRelais,GPIO.HIGH)
-		if GPIO.input(B):
-			logging.debug('Input B')
-			logging.info('Timer interrupted remotely, on-time: %s', (datetime.now() - TimeOn))
-			GPIO.output(PumpRelais,GPIO.LOW)
-			stop_threads = True
-			t1.join()
-			t2.join()
-			input()
-			break
-		elif GPIO.input(RedButton):
-			logging.debug('Input RedButton')
-			logging.info('Timer interrupted locally, on-time: %s', (datetime.now() - TimeOn))
-			GPIO.output(PumpRelais,GPIO.LOW)
-			stop_threads = True
-			t1.join()
-			t2.join()
-			input()
-			break
-		elif datetime.now() > TimeOff:
-			logging.info('Pump turned off by timer, on-time: %s', (datetime.now() - TimeOn))
-			GPIO.output(PumpRelais,GPIO.LOW)
-			stop_threads = True
-			t1.join()
-			t2.join()
-			input()
-			break
+		if TimeOn > datetime.now():
+			if GPIO.input(B):
+				logging.debug('Input B')
+				logging.info('Timer interrupted remotely')
+				stop_threads = True
+				t1.join()
+				t2.join()
+				input()
+				break
+			elif GPIO.input(RedButton):
+				logging.debug('Input RedButton')
+				logging.info('Timer interrupted locally')
+				stop_threads = True
+				t1.join()
+				t2.join()
+				input()
+				break
+		elif TimeOn <= datetime.now():
+			GPIO.output(PumpRelais,GPIO.HIGH)
+			if GPIO.input(B):
+				logging.debug('Input B')
+				logging.info('Timer interrupted remotely, on-time: %s', (datetime.now() - TimeOn))
+				GPIO.output(PumpRelais,GPIO.LOW)
+				stop_threads = True
+				t1.join()
+				t2.join()
+				input()
+				break
+			elif GPIO.input(RedButton):
+				logging.debug('Input RedButton')
+				logging.info('Timer interrupted locally, on-time: %s', (datetime.now() - TimeOn))
+				GPIO.output(PumpRelais,GPIO.LOW)
+				stop_threads = True
+				t1.join()
+				t2.join()
+				input()
+				break
+			elif datetime.now() >= TimeOff:
+				logging.info('Pump turned off by timer, on-time: %s', (datetime.now() - TimeOn))
+				GPIO.output(PumpRelais,GPIO.LOW)
+				stop_threads = True
+				t1.join()
+				t2.join()
+				input()
+				break
 
 def timer_menu():
 	logging.debug('Timer menu started')
@@ -231,28 +259,28 @@ def timer_menu():
 	t1 = threading.Thread(target = timer_menu_led, args=(stop,))
 	t1.start()
 	now = datetime.now()
-	global StartTime
-	StartTime = now + timedelta(minutes=-now.minute,seconds=-now.second) + timedelta(minutes=(int(now.minute/15)*15)+15)
+	global TimeOn
+	TimeOn = now + timedelta(minutes=-now.minute,seconds=-now.second) + timedelta(minutes=(int(now.minute/15)*15)+15)
 	clkLastState = GPIO.input(clk)
 	lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
-	lcd_string("Start time "+StartTime.strftime("%H:%M"),LCD_LINE_2)
+	lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
 	while True:
 		clkState = GPIO.input(clk)
 		dtState = GPIO.input(dt)
 		if clkState != clkLastState:
 			time.sleep(0.02)
 			if dtState != clkState:
-				StartTime += timedelta(minutes=15)
+				TimeOn += timedelta(minutes=15)
 			else:
-				StartTime -= timedelta(minutes=15)
-			lcd_string("Start time "+StartTime.strftime("%H:%M"),LCD_LINE_2)
-			print ("Start time = "+StartTime.strftime("%H:%M"))
+				TimeOn -= timedelta(minutes=15)
+			lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
+			print ("Start time = "+TimeOn.strftime("%H:%M"))
 			clkLastState = clkState
 			time.sleep(0.02)
 		elif GPIO.input(SW) == False:
 			time.sleep(0.05)
 			logging.debug('Input SW')
-			logging.info('Start Time set at '+ StartTime.strftime("%H:%M"))
+			logging.info('Start Time set at '+ TimeOn.strftime("%H:%M"))
 			timer_menu_end()
 			break
 		elif GPIO.input(RedButton):
@@ -265,31 +293,32 @@ def timer_menu():
 
 def timer_menu_end():
 	logging.debug('Timer menu end started')
-	global EndTime
-	EndTime = StartTime + timedelta(minutes=30)
+	global TimeOff
+	TimeOff = TimeOn + timedelta(minutes=30)
 	clkLastState = GPIO.input(clk)
-	lcd_string("Start time "+StartTime.strftime("%H:%M"),LCD_LINE_1)
-	lcd_string("End time   "+EndTime.strftime("%H:%M"),LCD_LINE_2)
+	lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_1)
+	lcd_string("End time   "+TimeOff.strftime("%H:%M"),LCD_LINE_2)
 	while True:
 		clkState = GPIO.input(clk)
 		dtState = GPIO.input(dt)
 		if clkState != clkLastState:
 			time.sleep(0.02)
 			if dtState != clkState:
-				EndTime += timedelta(minutes=15)
+				TimeOff += timedelta(minutes=15)
 			else:
-				EndTime -= timedelta(minutes=15)
-			lcd_string("End time   "+EndTime.strftime("%H:%M"),LCD_LINE_2)
-			print ("End time = "+EndTime.strftime("%H:%M"))
+				TimeOff -= timedelta(minutes=15)
+			lcd_string("End time   "+TimeOff.strftime("%H:%M"),LCD_LINE_2)
+			print ("End time = "+TimeOff.strftime("%H:%M"))
 			clkLastState = clkState
 			time.sleep(0.02)
 		elif GPIO.input(SW) == False:
 			time.sleep(0.05)
 			logging.debug('Input SW')
-			logging.info('End time set at '+ EndTime.strftime("%H:%M"))
+			logging.info('End time set at '+ TimeOff.strftime("%H:%M"))
 			stop.set()
 			t1.join()
-#			break # Removed break to see if RAINMAKER wouldn't appear ater pushing button while nothing else was configured
+			pump_on_timer()
+			break # Removed break to see if RAINMAKER wouldn't appear ater pushing button while nothing else was configured
 		elif GPIO.input(RedButton):
 			logging.debug('Input RedButton')
 			logging.info('Timer menu closed without setting a timer')
@@ -302,6 +331,7 @@ def input():
 	logging.debug('Input started')
 	GPIO.output(GreenLed,GPIO.HIGH)
 	GPIO.output(RedLed,GPIO.LOW)
+	global TimeOn
 	global TimeOff
 	lcd_string("Pomp standby..",LCD_LINE_2)
 	while True:
@@ -310,23 +340,30 @@ def input():
 			logging.debug('Input A')
 			logging.info('Pump turned on remotely')
 			pump_on()
+			break
 		elif GPIO.input(C):
 			logging.debug('Input C')
+			TimeOn = datetime.now()
 			TimeOff = datetime.now() + timedelta(minutes = 30)
 			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
 			pump_on_timer()
+			break
 		elif GPIO.input(D):
 			logging.debug('Input D')
+			TimeOn = datetime.now()
 			TimeOff = datetime.now() + timedelta(minutes = 60)
 			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
 			pump_on_timer()
+			break
 		elif GPIO.input(SW) == False:
 			logging.debug('Input SW(rotenc)')
 			timer_menu()
+			break
 		elif GPIO.input(GreenButton):
 			logging.debug('Input GreenButton')
 			logging.info('Pump turned on locally')
 			pump_on()
+			break
 
 if __name__ == "__main__":
 	try:
@@ -336,7 +373,7 @@ if __name__ == "__main__":
 #		pump_on_timer() # For LCD testing purposes
 	except RuntimeError as error:
 		print(error.args[0])
-		logging.error(error.args[0])
+		logging.exception(error.args[0])
 		GPIO.input(RedLed,HIGH)
 	except KeyboardInterrupt:
 		print("\nExiting application\n")
