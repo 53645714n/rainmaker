@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import RPi.GPIO as GPIO
 import threading
 import time
@@ -107,6 +107,18 @@ def lcd_string(message,line):
   for i in range(LCD_WIDTH):
     lcd_byte(ord(message[i]),LCD_CHR)
 
+def format_timedelta(td):
+    hours, remainder = divmod(td.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    hours, minutes, seconds = int(hours), int(minutes), int(seconds)
+    if hours < 10:
+        hours = '0%s' % int(hours)
+    if minutes < 10:
+        minutes = '0%s' % minutes
+    if seconds < 10:
+        seconds = '0%s' % seconds
+    return '%s:%s' % (hours, minutes)
+
 def pump_on_led(): # The LED's for pump on indefinately, started as a thread in pump_on
 	GPIO.output(RedLed,GPIO.HIGH)
 	while True:
@@ -127,10 +139,11 @@ def timer_menu_led(stop_event): # The LED's for pump on indefinately, started as
 	logging.debug('Stop timer_menu_led')
 
 def pump_on_lcd(): # The LCD for pump on indefinately, started as a thread in pump_on
-	lcd_string("Pomp staat aan.",LCD_LINE_2)
 	while True:
+		Pumptime = datetime.now() - TimeOn
 		lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
-		time.sleep(1)
+		lcd_string("Pomp aan   "+str(format_timedelta(Pumptime)),LCD_LINE_2)
+#		time.sleep(0.01)
 		if stop_threads:
 			break
 
@@ -150,9 +163,9 @@ def pump_on_timer_lcd(): # The LCD for pump on timer, started as a thread in pum
 		lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
 		if datetime.now() < TimeOn:
 			lcd_string("Pomp aan:  "+TimeOn.strftime('%H:%M'),LCD_LINE_2)
-			time.sleep(1)
+			time.sleep(2)
 			lcd_string("Pomp uit:  "+TimeOff.strftime('%H:%M'),LCD_LINE_2)
-			time.sleep(1)
+			time.sleep(2)
 			if stop_threads:
 				break
 		elif datetime.now() >= TimeOn:
@@ -339,6 +352,7 @@ def input():
 		if GPIO.input(A):
 			logging.debug('Input A')
 			logging.info('Pump turned on remotely')
+			TimeOn = datetime.now()
 			pump_on()
 			break
 		elif GPIO.input(C):
@@ -362,6 +376,7 @@ def input():
 		elif GPIO.input(GreenButton):
 			logging.debug('Input GreenButton')
 			logging.info('Pump turned on locally')
+			TimeOn = datetime.now()
 			pump_on()
 			break
 
