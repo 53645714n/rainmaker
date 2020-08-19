@@ -5,6 +5,9 @@ import threading
 import time
 #from lcd_i2c import lcd
 import smbus
+from pyky040 import pyky040
+
+#import pyky040 as pyky040
 
 #logging, logs all events to the file rainmaker.log
 logging.basicConfig(filename='/home/pi/rainmaker.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s: %(message)s')
@@ -21,12 +24,12 @@ GreenButton = 27
 RedLed = 16
 GreenLed = 17
 PumpRelais = 5
-clk = 18
-dt = 10
+CLK = 18
+DT = 10
 SW = 22
 GPIO.setup(SW, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(clk, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(dt, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(CLK, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(DT, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(A, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(B, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(C, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -36,6 +39,9 @@ GPIO.setup(GreenButton, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(RedLed,GPIO.OUT)
 GPIO.setup(GreenLed,GPIO.OUT)
 GPIO.setup(PumpRelais,GPIO.OUT)
+
+encoder = pyky040.Encoder(device='/dev/input/event0')
+encoder.setup(inc_callback = rotencinc, dec_callback = rotencdec)
 
 #LCD
 # Define some device parameters
@@ -264,6 +270,11 @@ def pump_on_timer(): # Turns on the pump and turns it off after a set time
 				input()
 				break
 
+def rotencinc(scale_position,time)
+	if scale_position > scale_position_old:
+		time += timedelta(minutes=15)
+		scale_position = scale_position_old
+
 def timer_menu():
 	logging.debug('Timer menu started')
 	global stop
@@ -274,22 +285,33 @@ def timer_menu():
 	now = datetime.now()
 	global TimeOn
 	TimeOn = now + timedelta(minutes=-now.minute,seconds=-now.second) + timedelta(minutes=(int(now.minute/15)*15)+15)
-	clkLastState = GPIO.input(clk)
+	clkLastState = GPIO.input(CLK)
 	lcd_string("RAINMAKER  "+datetime.now().strftime('%H:%M'),LCD_LINE_1)
 	lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
 	while True:
-		clkState = GPIO.input(clk)
-		dtState = GPIO.input(dt)
-		if clkState != clkLastState:
-			time.sleep(0.02)
-			if dtState != clkState:
-				TimeOn += timedelta(minutes=15)
-			else:
-				TimeOn -= timedelta(minutes=15)
-			lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
-			print ("Start time = "+TimeOn.strftime("%H:%M"))
-			clkLastState = clkState
-			time.sleep(0.02)
+		encoder.watch()
+#		clkState = GPIO.input(CLK)
+#		dtState = GPIO.input(DT)
+#		if clkState != clkLastState:
+#			time.sleep(0.02)
+#			if encoder._clockwise_tick():
+#				TimeOn += timedelta(minutes=15)
+#			else:
+#				TimeOn -= timedelta(minutes=15)
+#			lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
+#			print ("Start time = "+TimeOn.strftime("%H:%M"))
+#			clkLastState = clkState
+#			time.sleep(0.02)
+#		if clkState != clkLastState:
+#			time.sleep(0.02)
+#			if encoder._clockwise_tick():
+#				TimeOn += timedelta(minutes=15)
+#			elif encoder._counterclockwise_tick():
+#				TimeOn -= timedelta(minutes=15)
+		lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_2)
+		print ("Start time = "+TimeOn.strftime("%H:%M"))
+#			clkLastState = clkState
+#			time.sleep(0.02)
 		elif GPIO.input(SW) == False:
 			time.sleep(0.05)
 			logging.debug('Input SW')
@@ -308,12 +330,12 @@ def timer_menu_end():
 	logging.debug('Timer menu end started')
 	global TimeOff
 	TimeOff = TimeOn + timedelta(minutes=30)
-	clkLastState = GPIO.input(clk)
+	clkLastState = GPIO.input(CLK)
 	lcd_string("Start time "+TimeOn.strftime("%H:%M"),LCD_LINE_1)
 	lcd_string("End time   "+TimeOff.strftime("%H:%M"),LCD_LINE_2)
 	while True:
-		clkState = GPIO.input(clk)
-		dtState = GPIO.input(dt)
+		clkState = GPIO.input(CLK)
+		dtState = GPIO.input(DT)
 		if clkState != clkLastState:
 			time.sleep(0.02)
 			if dtState != clkState:
