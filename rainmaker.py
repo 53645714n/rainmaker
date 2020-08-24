@@ -12,18 +12,18 @@ logging.basicConfig(filename='/home/pi/rainmaker.log', level=logging.DEBUG, form
 #GPIO, use this section to change pin numbers if your wiring differs from mine
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
-A = 9
-B = 25
-C = 11
-D = 8
-RedButton = 26
-GreenButton = 27
-RedLed = 16
-GreenLed = 17
-PumpRelais = 5
-clk = 18
-dt = 10
-SW = 22
+A = 21
+B = 20
+C = 19
+D = 18
+RedButton = 22
+GreenButton = 24
+RedLed = 23
+GreenLed = 25
+PumpRelais = 4
+clk = 13
+dt = 12
+SW = 6
 GPIO.setup(SW, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(clk, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(dt, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -60,7 +60,7 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 #bus = smbus.SMBus(0)  # Rev 1 Pi uses 0
-bus = smbus.SMBus(3) # Rev 2 Pi uses 1
+bus = smbus.SMBus(1) # Rev 2 Pi uses 1
 
 def lcd_init():
   # Initialise display
