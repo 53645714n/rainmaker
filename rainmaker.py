@@ -15,7 +15,7 @@ GPIO.setwarnings(False)
 A = 21
 B = 20
 C = 19
-D = 18
+D = 16
 RedButton = 22
 GreenButton = 24
 RedLed = 23
@@ -293,14 +293,14 @@ def input():
 		elif GPIO.input(C):
 			logging.debug('Input C')
 			TimeOn = datetime.now()
-			TimeOff = datetime.now() + timedelta(minutes = 30)
+			TimeOff = datetime.now() + timedelta(minutes = 60)
 			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
 			pump_on_timer()
 			break
 		elif GPIO.input(D):
 			logging.debug('Input D')
 			TimeOn = datetime.now()
-			TimeOff = datetime.now() + timedelta(minutes = 60)
+			TimeOff = datetime.now() + timedelta(minutes = 120
 			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
 			pump_on_timer()
 			break
