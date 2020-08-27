@@ -300,7 +300,7 @@ def input():
 		elif GPIO.input(D):
 			logging.debug('Input D')
 			TimeOn = datetime.now()
-			TimeOff = datetime.now() + timedelta(minutes = 120
+			TimeOff = datetime.now() + timedelta(minutes = 120)
 			logging.info('Pump turned on remotely, timeOff set at: %s', TimeOff)
 			pump_on_timer()
 			break
