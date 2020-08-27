@@ -3,8 +3,9 @@ Description=Rainmaker
 After=multi-user.target
 
 [Service]
+User=pi
 Type=idle
-ExecStart=/usr/bin/python /home/pi/rainmaker/rainmaker.py
+ExecStart=/usr/bin/python3 /home/pi/rainmaker/rainmaker.py
 
 [Install]
 WantedBy=multi-user.target

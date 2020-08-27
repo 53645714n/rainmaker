@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, time
 import RPi.GPIO as GPIO
 import threading
 import time
-import smbus
+from smbus2 import SMBus
+#import smbus
 from lcd_i2c import lcd_string, lcd_init
 
 #logging, logs all events to the file rainmaker.log
@@ -41,7 +42,7 @@ GPIO.setup(PumpRelais,GPIO.OUT)
 LCD_LINE_1 = 0x80 # LCD RAM address for the 1st line
 LCD_LINE_2 = 0xC0 # LCD RAM address for the 2nd line
 
-lcd_init()
+#lcd_init()
 
 def format_timedelta(td):
     hours, remainder = divmod(td.total_seconds(), 3600)

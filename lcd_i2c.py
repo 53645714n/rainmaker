@@ -31,7 +31,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #--------------------------------------
-import smbus
+#import smbus
+from smbus2 import SMBus
 import time
 
 # Define some device parameters
@@ -58,7 +59,7 @@ E_DELAY = 0.0005
 
 #Open I2C interface
 #bus = smbus.SMBus(0)  # Rev 1 Pi uses 0
-bus = smbus.SMBus(1) # Rev 2 Pi uses 1
+bus = SMBus(1) # Rev 2 Pi uses 1
 
 def lcd_init():
   # Initialise display
